@@ -161,6 +161,7 @@
     <Compile Include="Configuration\ServerElement.cs" />
     <Compile Include="Definitions\DefinitionEventArgs.cs" />
     <Compile Include="Definitions\IPlaceholder.cs" />
+    <Compile Include="Edit\Versioning\InvalidVersionInfo.cs" />
     <Compile Include="Edit\Versioning\VersionInfo.cs" />
     <Compile Include="Persistence\LinqQueryFacade.cs" />
     <Compile Include="Persistence\NH\LinqNHQueryFacade.cs" />
@@ -720,9 +721,13 @@
     <Compile Include="Web\Mvc\ContentControllerOfT.cs" />
     <Compile Include="Web\Mvc\ControllerContentHelper.cs" />
     <Compile Include="Web\Mvc\ControllerFactoryConfigurator.cs" />
+    <Compile Include="Web\Mvc\Html\Displayable.cs" />
+    <Compile Include="Web\Mvc\Html\DisplayExtensions.cs" />
     <Compile Include="Web\Mvc\Html\DroppableZoneExtensions.cs" />
     <Compile Include="Web\Mvc\Html\DroppableZoneHelper.cs" />
     <Compile Include="Web\Mvc\Html\HtmlExtensions.cs" />
+    <Compile Include="Web\Mvc\Html\ItemHelper.cs" />
+    <Compile Include="Web\Mvc\Html\MvcDiv.cs" />
     <Compile Include="Web\Mvc\Html\ZoneExtensions.cs" />
     <Compile Include="Web\Mvc\Html\ZoneHelper.cs" />
     <Compile Include="Web\Mvc\MvcExtensions.cs" />

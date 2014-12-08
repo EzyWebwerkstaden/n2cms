@@ -29,6 +29,7 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using N2.Collections;
 using N2.Details;
 using N2.Integrity;
@@ -96,7 +97,7 @@ namespace N2.Web
         /// Link to a container of news or blog items.
         /// </summary>
         [EditableLink("Content Container (Parent)", 100, SelectableTypes = new[] {typeof (ContentItem)})]
-        public virtual ContentItem Container
+        public virtual ContentItem LinkedPage
         {
             get { return (ContentItem) GetDetail("Container"); }
             set
@@ -138,16 +139,13 @@ namespace N2.Web
         }
 
         [EditableChildren("Content Containers", "Sources", 100)]
-        public virtual IList<ContentListContainerLink> Containers
+        public virtual IEnumerable<ContentListContainerLink> ContainerLinks
         {
             get
             {
                 try
                 {
-                    var childItems = GetChildren();
-                    if (childItems == null)
-                        return new List<ContentListContainerLink>();
-                    return childItems.Cast<ContentListContainerLink>();
+					return GetChildPartsUnfiltered().OfType<ContentListContainerLink>();
                 }
                 catch (Exception x)
                 {
@@ -225,13 +223,6 @@ namespace N2.Web
         {
             get { return (bool)(GetDetail("ShowFutureEvents") ?? false); }
             set { SetDetail("ShowFutureEvents", value, false); }
-        }
-
-        [EditableCheckBox("Permissions", 502, CheckBoxText = "Evaluate and Enforce Permissions")]
-        public virtual bool EnforcePermissions
-        {
-            get { return (bool)(GetDetail("EnforcePermissions") ?? true); }
-            set { SetDetail("EnforcePermissions", value, true); }
         }
 
         //TODO: Make the following properties visible only if the NewsDisplayMode is set to HtmlItemTemplate

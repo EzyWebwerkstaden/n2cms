@@ -279,7 +279,7 @@ namespace N2
 			set { detailCollections = value; }
 		}
 
-		/// <summary>Gets or sets all a collection of child items of this item ignoring permissions. If you want the children the current user has permission to use <see cref="GetChildren()"/> instead.</summary>
+		/// <summary>Gets or sets all a collection of child items of this item ignoring permissions. If you want the children the current user has permission to use <see cref="GetChildPagesUnfiltered()"/> and <see cref="GetChildPartsUnfiltered()" /> instead.</summary>
 		[NonInterceptable]
 		public virtual IContentItemList<ContentItem> Children
 		{
@@ -546,22 +546,14 @@ namespace N2
 			object o = null;
 			try
 			{
-				if (Details.ContainsKey(detailName))
-				{
-					o = Details[detailName].Value;
-					if (typeof(T).IsEnum && o != null && o.GetType() == typeof(string) && Enum.IsDefined(typeof(T), o))
-					{
-						return (T)Enum.Parse(typeof(T), (string)o); // Special case: Handle enum
-					}
-					else
-					{
-						return (T)(o == null ? null : o); // Attempt regular cast conversion
-					}
-				}
-				else
-				{
-					return defaultValue;
-				}
+			    if (!Details.ContainsKey(detailName)) return defaultValue;
+			    
+                o = Details[detailName].Value;
+			    if (typeof(T).IsEnum && o is string && Enum.IsDefined(typeof(T), o))
+			    {
+			        return (T)Enum.Parse(typeof(T), (string)o); // Special case: Handle enum
+			    }
+			    return (T)(o); // Attempt regular cast conversion
 			}
 			catch (InvalidCastException inner)
 			{
@@ -581,10 +573,10 @@ namespace N2
 		[NonInterceptable]
 		protected internal virtual void SetDetail<T>(string detailName, T value, T defaultValue)
 		{
-			if (value == null || !value.Equals(defaultValue))
+            if (!EqualityComparer<T>.Default.Equals(value, defaultValue))
 				SetDetail(detailName, value);
 			else if (Details.ContainsKey(detailName))
-				details.Remove(detailName);
+				Details.Remove(detailName);
 		}
 
 		/// <summary>Set a value into the <see cref="Details"/> bag. If a value with the same name already exists it is overwritten.</summary>
@@ -747,10 +739,29 @@ namespace N2
 				|| (Name + Extension).Equals(name, StringComparison.InvariantCultureIgnoreCase);
 		}
 
-		/// <summary>Gets child items the current user is allowed to access.</summary>
+		/// <summary>Gets all direct child pages of the published version of this item without regards to user access, visibility or published state.</summary>
 		/// <returns>A list of content items.</returns>
 		/// <remarks>This method is used by N2 for site map providers, and for data source controls. Keep this in mind when overriding this method.</remarks>
 		[NonInterceptable]
+		public virtual ItemList GetChildPagesUnfiltered()
+		{
+			var master = VersionOf.HasValue ? VersionOf.Value : this ?? this;
+			return new ItemList(master.Children.FindPages());
+		}
+
+		/// <summary>Gets direct child parts of the item without regards to user access, visibility or published state.</summary>
+		/// <returns>A list of content items.</returns>
+		/// <remarks>This method is used by N2 for site map providers, and for data source controls. Keep this in mind when overriding this method.</remarks>
+		[NonInterceptable]
+		public virtual ItemList GetChildPartsUnfiltered(string zoneName = null)
+		{
+			return new ItemList(string.IsNullOrEmpty(zoneName) ? Children.FindParts() : Children.FindParts(zoneName));
+		}
+
+		/// <summary>Gets child items the current user is allowed to access.</summary>
+		/// <returns>A list of content items.</returns>
+		/// <remarks>This method is used by N2 for site map providers, and for data source controls. Keep this in mind when overriding this method.</remarks>
+		[NonInterceptable, Obsolete("Use GetChildPagesUnfiltered().WhereNavigatable() or GetChildPartsUnfiltered().WhereNavigatable() instead. Don't forget to apply security filters to the result list")]
 		public virtual ItemList GetChildren()
 		{
 			return GetChildren(new AccessFilter());
@@ -760,7 +771,7 @@ namespace N2
 		/// <param name="childZoneName">The name of the zone.</param>
 		/// <returns>A list of items that have the specified zone name.</returns>
 		/// <remarks>This method is used by N2 when when non-page items are added to a zone on a page and in edit mode when displaying which items are placed in a certain zone. Keep this in mind when overriding this method.</remarks>
-		[NonInterceptable, Obsolete("Use GetChildren(new ZoneFilter(\"childZoneName\"), new AccessFilter()) instead. This method will be removed in N2CMS 3.0.")]
+		[NonInterceptable, Obsolete("Use GetChildPartsUnfiltered(childZoneName). This method will be removed in N2CMS 3.0.")]
 		public virtual ItemList GetChildren(string childZoneName)
 		{
 			return GetChildren(new AllFilter(new ZoneFilter(childZoneName), new AccessFilter()));
@@ -769,7 +780,7 @@ namespace N2
 		/// <summary>Gets children applying filters.</summary>
 		/// <param name="filters">The filters to apply on the children.</param>
 		/// <returns>A list of filtered child items.</returns>
-		[NonInterceptable]
+		[NonInterceptable, Obsolete("Use GetChildPagesUnfiltered().Where(filters) or GetChildPartsUnfiltered().Where(filters)")]
 		public virtual ItemList GetChildren(params ItemFilter[] filters)
 		{
 			return GetChildren(new AllFilter(filters));
@@ -778,10 +789,40 @@ namespace N2
 		/// <summary>Gets children applying filters.</summary>
 		/// <param name="filter">The filters to apply on the children.</param>
 		/// <returns>A list of filtered child items.</returns>
-		[NonInterceptable]
+		[NonInterceptable, Obsolete("Use GetChildPagesUnfiltered().Where(filter) or GetChildPartsUnfiltered().Where(filter)")]
 		public virtual ItemList GetChildren(ItemFilter filter)
 		{
-			IEnumerable<ContentItem> items = !VersionOf.HasValue ? Children : VersionOf.Children;
+			if (VersionOf.HasValue && VersionOf == null)
+			{
+				throw new NullReferenceException(String.Format(
+					"ContentItem #{0} (type: {1}, templateKey: {2}) can't get children because it's not a valid version of any ContentItem.", 
+					ID, TypeName, TemplateKey));
+			}
+
+			IEnumerable<ContentItem> items;
+
+			if (!VersionOf.HasValue)
+			{
+				try { items = Children; }
+				catch (Exception x) { 
+					throw new N2Exception(
+						String.Format("ContentItem #{0} (type: {1}, templateKey: {2}) failed to get Children.",
+							ID, TypeName, TemplateKey), 
+					x); 
+				}
+			}
+
+			else
+			{
+				try { items = VersionOf.Children; }
+				catch (Exception x) { 
+					throw new N2Exception(
+						String.Format("ContentItem #{0} (type: {1}, templateKey: {2}) failed to get VersionOf.Children (VersionOf: {3})",
+							ID, TypeName, TemplateKey, VersionOf), 
+					x); 
+				}
+			}
+
 			return new ItemList(items, filter);
 		}
 
@@ -790,7 +831,7 @@ namespace N2
 		/// <param name="take">Number of child items to take at the database level.</param>
 		/// <param name="filter">The filters to apply on the children after they have been loaded from the database.</param>
 		/// <returns>A list of filtered child items.</returns>
-		[NonInterceptable]
+		[NonInterceptable, Obsolete("Use GetChildPagesUnfiltered().Skip(skip).Take(take).Where(filter) or GetChildPartsUnfiltered().Skip(skip).Take(take).Where(filter)")]
 		public virtual ItemList GetChildren(int skip, int take, ItemFilter filter)
 		{
 			var items = !VersionOf.HasValue ? Children : VersionOf.Children;
@@ -912,14 +953,15 @@ namespace N2
 		{
 			foreach (ContentDetail detail in source.Details.Values)
 			{
+                ContentDetail clonedDetail = detail.Clone();
+                clonedDetail.EnclosingItem = destination;
+
 				if (destination.details.ContainsKey(detail.Name))
 				{
-					destination.details[detail.Name].Value = detail.Value;//.Value should behave polymorphically
+                    destination.details[detail.Name].Value = clonedDetail.Value;//.Value should behave polymorphically
 				}
 				else
 				{
-					ContentDetail clonedDetail = detail.Clone();
-					clonedDetail.EnclosingItem = destination;
 					destination.details[detail.Name] = clonedDetail;
 				}
 			}

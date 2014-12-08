@@ -2,14 +2,14 @@
 <asp:Content ID="ContentHead" ContentPlaceHolderID="Head" runat="server">
 </asp:Content>
 <asp:Content ContentPlaceHolderID="Toolbar" runat="server">
-	<asp:HyperLink runat="server" NavigateUrl="New.aspx" meta:resourcekey="HyperLinkResource1">New user</asp:HyperLink>
+	<asp:HyperLink runat="server" NavigateUrl="New.aspx" CssClass="btn" meta:resourcekey="HyperLinkResource1">New user</asp:HyperLink>
 </asp:Content>
 <asp:Content ID="Content4" ContentPlaceHolderID="Content" runat="server">
 	
 	<asp:GridView ID="dgrUsers" runat="server" DataSourceID="odsUsers" AllowPaging="True"
 		AutoGenerateColumns="False" UseAccessibleHeader="True" OnRowDeleting="dgrUsers_OnRowDeleting"
 		DataKeyNames="UserName" BorderWidth="0px"
-		CssClass="table table-striped table-hover table-condensed" meta:resourcekey="dgrUsersResource1">
+		CssClass="table table-striped table-hover table-condensed table-bordered" meta:resourcekey="dgrUsersResource1">
 		<PagerSettings Mode="NumericFirstLast" PageButtonCount="20" Position="TopAndBottom" />
 		<Columns>
 			<asp:HyperLinkField DataNavigateUrlFields="UserName" DataTextField="UserName" DataNavigateUrlFormatString="Edit.aspx?user={0}" meta:resourcekey="bcUserName" runat="server"/>
