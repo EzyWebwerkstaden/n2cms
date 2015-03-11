@@ -31,6 +31,12 @@ namespace N2.Configuration
             get { return (string)base["varyByCustom"]; }
             set { base["varyByCustom"] = value; }
         }
+        [ConfigurationProperty("varyByHeader", DefaultValue = "")]
+        public string VaryByHeader
+        {
+            get { return (string)base["varyByHeader"]; }
+            set { base["varyByHeader"] = value; }
+        }
 
         [ConfigurationProperty("cacheProfile")]
         public string CacheProfile
@@ -45,5 +51,6 @@ namespace N2.Configuration
             get { return (TimeSpan?)base["slidingExpiration"]; }
             set { base["slidingExpiration"] = value; }
         }
+
     }
 }
