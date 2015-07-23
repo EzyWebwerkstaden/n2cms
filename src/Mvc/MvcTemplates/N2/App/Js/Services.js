@@ -67,7 +67,7 @@
 		return frameManipulator;
 	});
 
-	module.factory('FrameContext', function () {
+	module.factory('FrameContext', function ($rootScope) {
 		window.top.n2ctx = {
 			refresh: function (ctx) {
 			},
@@ -81,6 +81,14 @@
 				return "metro";
 			},
 			toolbarSelect: function () {
+			},
+			context: function (context) {
+				if (context.Messages && context.Messages.length) {
+					$rootScope.$broadcast("changecontext", context);
+				}
+			},
+			failure: function (response) {
+				$rootScope.$broadcast("communicationfailure", { status: response.status, statusText: response.statusText });
 			}
 		};
 		return window.top.n2ctx;
@@ -98,9 +106,11 @@
 			'translations': { method: 'GET', params: { target: 'translations' } },
 			'versions': { method: 'GET', params: { target: 'versions' } },
 			'definitions': { method: 'GET', params: { target: 'definitions' } },
+			'templates': { method: 'GET', params: { target: 'templates' } },
 			'move': { method: 'POST', params: { target: 'move' } },
 			'sort': { method: 'POST', params: { target: 'sort' } },
 			'remove': { method: 'POST', params: { target: 'delete' } },
+			'removeMessage': { method: 'DELETE', params: { target: 'message' } },
 			'publish': { method: 'POST', params: { target: 'publish' } },
 			'unpublish': { method: 'POST', params: { target: 'unpublish' } },
 			'schedule': { method: 'POST', params: { target: 'schedule' } }
@@ -182,7 +192,9 @@
 	module.factory('Context', function ($resource) {
 		var res = $resource('Api/Context.ashx/:target', { target: '' }, {
 			'interface': { method: 'GET', params: { target: 'interface' } },
-			'full': { method: 'GET', params: { target: 'full' } }
+			'full': { method: 'GET', params: { target: 'full' } },
+			'messages': { method: 'GET', params: { target: 'messages' } },
+			'status': { method: 'GET', params: { target: 'status' } }
 		});
 
 		return res;
