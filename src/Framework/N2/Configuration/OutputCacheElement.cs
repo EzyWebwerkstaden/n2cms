@@ -52,5 +52,11 @@ namespace N2.Configuration
             set { base["slidingExpiration"] = value; }
         }
 
+		[ConfigurationProperty("invalidateOnChangesTo", DefaultValue = OutputCacheInvalidationMode.Page)]
+		public OutputCacheInvalidationMode InvalidateOnChangesTo
+		{
+			get { return (OutputCacheInvalidationMode)base["invalidateOnChangesTo"]; }
+			set { base["invalidateOnChangesTo"] = value; }
     }
+}
 }

@@ -1,6 +1,7 @@
 using N2.Collections;
 using N2.Definitions;
 using N2.Edit;
+using N2.Edit.Collaboration;
 using N2.Edit.Trash;
 using N2.Edit.Versioning;
 using N2.Edit.Workflow;
@@ -62,13 +63,42 @@ namespace N2.Management.Api
                         case "/versions":
                             var versions = GetVersions(context).ToList();
                             context.Response.WriteJson(new { Versions = versions });
-                            break;
-                        case "/definitions":
-                            var definitions = GetDefinitions(context)
-                                .Select(d => new { d.Title, d.Description, d.Discriminator, d.ToolTip, d.IconUrl, d.IconClass, TypeName = d.ItemType.Name })
-                                .ToList();
-                            context.Response.WriteJson(new { Definitions = definitions });
-                            break;
+							break;
+						case "/definitions":
+							var definitions = GetDefinitions(context)
+								.WhereAuthorized(engine.SecurityManager, context.User, Selection.SelectedItem)
+								.Select(d => new
+								{
+									d.Title,
+									d.Description,
+									d.Discriminator,
+									d.ToolTip,
+									d.IconUrl,
+									d.IconClass,
+									TypeName = d.ItemType.Name,
+									EditUrl = engine.ManagementPaths.GetEditNewPageUrl(Selection.SelectedItem, d)
+								})
+								.ToList();
+							context.Response.WriteJson(new { Definitions = definitions });
+							break;
+						case "/templates":
+							var templates = GetDefinitions(context)
+								.SelectMany(d => engine.Resolve<ITemplateAggregator>().GetTemplates(d.ItemType))
+								.WhereAllowed(Selection.SelectedItem, context.Request["zoneName"], context.User, engine.Definitions, engine.SecurityManager)
+								.Select(d => new { 
+									d.Title, 
+									d.Description, 
+									d.Definition.Discriminator, 
+									d.Definition.ToolTip, 
+									d.Definition.IconUrl, 
+									d.Definition.IconClass, 
+									TypeName = d.Definition.ItemType.Name, 
+									d.Definition.TemplateKey,
+									EditUrl = engine.ManagementPaths.GetEditNewPageUrl(Selection.SelectedItem, d.Definition)
+								})
+								.ToList();
+							context.Response.WriteJson(new { Templates = templates });
+							break;
                         case "/tokens":
                             var tokens = GetTokens(context);
                             context.Response.WriteJson(new { Tokens = tokens });
@@ -145,8 +175,16 @@ namespace N2.Management.Api
                     }
                     break;
                 case "DELETE":
-                    EnsureValidSelection();
-                    Delete(context);
+					switch (context.Request.PathInfo)
+					{
+						case "/message":
+							DeleteMessage(context);
+							break;
+						default:
+							EnsureValidSelection();
+							Delete(context);
+							break;
+					}
                     break;
                 case "PUT":
                     EnsureValidSelection();
@@ -154,6 +192,11 @@ namespace N2.Management.Api
                     break;
             }
         }
+
+		private void DeleteMessage(HttpContextBase context)
+		{
+			engine.Resolve<ManagementMessageCollector>().Delete(context.Request["source"], context.Request["id"]);
+		}
 
         private void Authorize(IPrincipal user, ContentItem item)
         {
@@ -216,7 +259,7 @@ namespace N2.Management.Api
             if (item == null)
                 throw new HttpException((int)HttpStatusCode.NotFound, "Not Found");
 
-            var requestBody = context.GetOrDeserializeRequestStreamJson<object>();
+            var requestBody = context.GetOrDeserializeRequestStreamJsonDictionary<object>();
             foreach (var kvp in requestBody)
                 item[kvp.Key] = kvp.Value;
 
@@ -234,7 +277,7 @@ namespace N2.Management.Api
             
             var item = engine.Resolve<ContentActivator>().CreateInstance(definition.ItemType, parent);
 
-            var requestBody = context.GetOrDeserializeRequestStreamJson<object>();
+            var requestBody = context.GetOrDeserializeRequestStreamJsonDictionary<object>();
             foreach (var kvp in requestBody)
                 item[kvp.Key] = kvp.Value;
 
