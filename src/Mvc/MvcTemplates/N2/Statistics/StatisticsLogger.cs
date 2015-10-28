@@ -4,6 +4,7 @@ using N2.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace N2.Management.Statistics
@@ -38,9 +39,13 @@ namespace N2.Management.Statistics
 			}
 		}
 
+		static Regex crawlerExpression = new Regex(@"bot|crawler|baiduspider|80legs|ia_archiver|voyager|curl|wget|yahoo! slurp|mediapartners-google", RegexOptions.IgnoreCase);
+
 		private void OnEndRequest(object sender, EventArgs e)
 		{
-			filler.RegisterView(context.CurrentPath);
+			if (context.HttpContext.GetViewPreference(Edit.ViewPreference.None) == Edit.ViewPreference.None)
+				if (context.HttpContext.Request.UserAgent != null && !crawlerExpression.IsMatch(context.HttpContext.Request.UserAgent))
+					filler.RegisterView(context.CurrentPath);
 		}
 
 		public void Start()

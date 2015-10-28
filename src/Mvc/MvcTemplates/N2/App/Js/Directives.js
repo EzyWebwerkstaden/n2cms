@@ -245,6 +245,26 @@
 		};
 	});
 
+	module.directive("n2PreviewFrame", function (EbbCallbacks) {
+		return function (scope, element, attr) {
+			var src = scope.appendPreviewOptions(scope.Context.Paths.PreviewUrl);
+			element.prop("src", src);
+			element.prop("id", "page-preview-frame");
+			element.prop("name", "preview");
+
+			element.bind("load", EbbCallbacks(function (e) {
+				try {
+					scope.$apply(function () {
+						var loco = e.target.contentWindow.location;
+						scope.$emit("preiewloaded", { path: loco.pathname, query: loco.search, url: loco.toString() });
+					});
+				} catch (ex) {
+					window.console && console.log("frame access exception", ex);
+				}
+			}, 50));
+		};
+	})
+
 	module.directive("keyup", function ($parse) {
 		return function (scope, element, attr) {
 			var fn = $parse(attr.keyup);
@@ -616,7 +636,7 @@ span.null {color:silver}\
 				angular.forEach(map, function (selector, eventName) {
 					$rootScope.$on(eventName, function () {
 						setTimeout(function () {
-							if (scope.Context.Flags.indexOf("ContentEdit") < 0)
+							if (!scope.Context.Flags.ContentEdit)
 								if (element.find(selector).siblings(".dropdown.open").length == 0)
 									element.find(selector).focus();
 						});

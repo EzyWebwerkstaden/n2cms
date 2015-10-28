@@ -17,13 +17,11 @@
 	});
 
 	function appendFlag(flag) {
-		$scope.Context.Flags.push(flag);
+		$scope.Context.Flags[flag] = true;
 	};
 	
 	function removeFlag(flag) {
-		var index = $scope.Context.Flags.indexOf(flag);
-		if (index >= 0)
-			$scope.Context.Flags.splice(index, 1);
+		$scope.Context.Flags[flag] = false;
 	};
 
 	function appendPreviewFlag() {
@@ -85,13 +83,13 @@
 	}
 
 	$rootScope.$on("contextchanged", function (scope, e) {
-		if ($scope.Context.Flags.indexOf('Management') >= 0)
+		if ($scope.Context.Flags.Management)
 			delete $scope.preview;
 		else
 			appendPreviewFlag();
 
 		for (var i in targets) {
-			$scope.Context.Flags.push("Target" + targets[i]);
+			$scope.Context.Flags["Target" + targets[i]] = true;
 		}
 	});
 
@@ -131,14 +129,4 @@
 	$rootScope.$on("targets-clear", function (e, data) {
 		clearTargets();
 	});
-
-	$scope.frameLoaded = function (e) {
-		try {
-			var loco = e.target.contentWindow.location;
-			$scope.$emit("preiewloaded", { path: loco.pathname, query: loco.search, url: loco.toString() });
-		} catch (ex) {
-			$scope.$emit("preiewaccessexception", { ex: ex });
-			console.log("frame access exception", ex);
-		}
-	};
 };

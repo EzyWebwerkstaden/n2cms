@@ -56,73 +56,66 @@ namespace N2.Management.Api
                     {
                         case "/search":
                             WriteSearch(context);
-                            break;
+                            return;
                         case "/translations":
                             var translations = GetTranslations(context).ToList();
                             context.Response.WriteJson(new { Translations = translations });
-                            break;
+                            return;
                         case "/versions":
                             var versions = GetVersions(context).ToList();
                             context.Response.WriteJson(new { Versions = versions });
-							break;
+							return;
 						case "/definitions":
 							var definitions = GetDefinitionTemplateInfos(context);
 							context.Response.WriteJson(new { Definitions = definitions });
-							break;
+							return;
 						case "/templates":
 							var templates = GetTemplateInfos(context);
 							var wizards = GetwizardInfos(context);
 							context.Response.WriteJson(new { Templates = templates, Wizards = wizards });
-							break;
+							return;
                         case "/tokens":
                             var tokens = GetTokens(context);
                             context.Response.WriteJson(new { Tokens = tokens });
-                            break;
-                        case "/children":
+                            return;
+						case "":
+						case "/":
+						case "/children":
 							var children = GetChildren(context).ToList();
                             context.Response.WriteJson(new { Children = children, IsPaged = Selection.SelectedItem.ChildState.IsAny(CollectionState.IsLarge) });
-                            break;
+                            return;
                         case "/branch":
 							var branch = GetBranch(context);
                             context.Response.WriteJson(new { Branch = branch });
-                            break;
+                            return;
                         case "/tree":
 							var tree = GetTree(context);
                             context.Response.WriteJson(new { Tree = tree });
-                            break;
+                            return;
                         case "/ancestors":
 							var ancestors = GetAncestors(context);
                             context.Response.WriteJson(new { Ancestors = ancestors });
-                            break;
+                            return;
                         case "/parent":
 							var parent = GetParent(context);
                             context.Response.WriteJson(new { Parent = parent });
-                            break;
+                            return;
                         case "/node":
 							var node = GetNode(context);
                             context.Response.WriteJson(new { Node = node });
-                            break;
-                        default:
-                            if (string.IsNullOrEmpty(context.Request.PathInfo))
-                            {
-                                context.Response.WriteJson(new { Children = GetChildren(context).ToList(), IsPaged = Selection.SelectedItem.ChildState.IsAny(CollectionState.IsLarge) });
-                            }
-                            else
-                            {
-                                if (context.Request.PathInfo.StartsWith("/"))
-                                {
-                                    int id;
-                                    if (int.TryParse(context.Request.PathInfo.Trim('/'), out id))
-                                    {
-                                        var item = engine.Persister.Get(id);
-                                        context.Response.WriteJson(item);
-                                        return;
-                                    }
-                                }
-								if (!TryExecuteExternalHandlers(context))
-									throw new HttpException((int)HttpStatusCode.NotImplemented, "Not Implemented");
-                            }
-                            break;
+                            return;
+						default:
+							if (context.Request.PathInfo.StartsWith("/"))
+							{
+								int id;
+								if (int.TryParse(context.Request.PathInfo.Trim('/'), out id))
+								{
+									var item = engine.Persister.Get(id);
+									context.Response.WriteJson(item);
+									return;
+								}
+							}
+							break;
                     }
                     break;
                 case "POST":
@@ -131,29 +124,32 @@ namespace N2.Management.Api
                     {
                         case "":
                             Create(context);
-                            break;
+                            return;
                         case "/update":
                             Update(context);
-                            break;
+                            return;
                         case "/sort":
                         case "/move":
                             Move(context, Selection.RequestValueAccessor);
-                            break;
+                            return;
                         case "/copy":
                             Copy(context, Selection.RequestValueAccessor);
-                            break;
+                            return;
                         case "/delete":
                             Delete(context);
-                            break;
+                            return;
                         case "/publish":
                             Publish(context);
-                            break;
+                            return;
                         case "/unpublish":
                             Unpublish(context);
-                            break;
+                            return;
                         case "/schedule":
                             Schedule(context);
-                            break;
+							return;
+						case "/autosave":
+							Autosave(context);
+							return;
                     }
                     break;
                 case "DELETE":
@@ -161,19 +157,82 @@ namespace N2.Management.Api
 					{
 						case "/message":
 							DeleteMessage(context);
-							break;
-						default:
+							return;
+						case "/":
+						case "":
 							EnsureValidSelection();
 							Delete(context);
-							break;
+							return;
 					}
                     break;
                 case "PUT":
                     EnsureValidSelection();
                     Update(context);
-                    break;
+                    return;
             }
+
+			if (!TryExecuteExternalHandlers(context))
+				throw new HttpException((int)HttpStatusCode.NotImplemented, "Not Implemented");
         }
+
+		private void Autosave(HttpContextBase context)
+		{
+			var selected = Selection.ParseSelectionFromRequest();
+			if (selected == null)
+				throw new HttpException((int)HttpStatusCode.NotFound, "Not Found");
+
+			var requestBody = context.GetOrDeserializeRequestStreamJsonDictionary<object>();
+			var discriminator = EditExtensions.GetDiscriminator(context.Request);
+
+			ContentItem item;
+			if (string.IsNullOrEmpty(discriminator))
+			{
+				item = selected;
+				var versions = engine.Resolve<VersionManager>();
+				if (item.State != ContentState.Draft)
+					item = versions.GetOrCreateDraft(item);
+
+				Update(requestBody, item);
+
+				if (item.ID == 0 && item.VersionOf.HasValue)
+					versions.UpdateVersion(item);
+				else
+				{
+					engine.Persister.Repository.SaveOrUpdate(item);
+					engine.Persister.Repository.Flush();
+				}
+			}
+			else
+			{
+				int id;
+				if (requestBody.ContainsKey("ID") && (id = (int)requestBody["ID"]) != 0)
+				{
+					item = engine.Persister.Get(id);
+				}
+				else
+				{
+					item = engine.Resolve<IDefinitionManager>().GetDefinition(discriminator).CreateInstance(selected);
+					item.State = ContentState.Draft;
+				}
+
+				Update(requestBody, item);
+
+				bool itemNeedsResaveWithIdGeneratedName = string.IsNullOrEmpty(item.Name);
+				engine.Persister.Repository.SaveOrUpdate(item);
+				engine.Persister.Repository.Flush();
+				if (itemNeedsResaveWithIdGeneratedName)
+					engine.Persister.Repository.Flush();
+			}
+
+			context.Response.WriteJson(new { ID = item.VersionOf.ID ?? item.ID, VersionIndex = item.VersionIndex });
+		}
+
+		private void Update(IDictionary<string, object> requestBody, ContentItem item)
+		{
+			foreach (var kvp in requestBody)
+				if (kvp.Key != "ID" && kvp.Key != "VersionIndex")
+					item[kvp.Key] = kvp.Value;
+		}
 
 		private bool TryExecuteExternalHandlers(HttpContextBase context)
 		{

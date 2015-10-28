@@ -7,12 +7,20 @@
 		return {};
 	});
 
+	module.factory("EbbCallbacks", function (Eventually) {
+		return function (callback, ms, onWorkCancelled, parallelWorkGroup) {
+			return function () {
+				Eventually(callback, ms, onWorkCancelled, parallelWorkGroup, arguments);
+			}
+		}
+	});
+
 	module.factory('Eventually', function ($timeout) {
 		return (function () {
 			// clears the previous action if a new event is triggered before the timeout
 			var timer = 0;
 			var timers = {};
-			return function(callback, ms, onWorkCancelled, parallelWorkGroup) {
+			return function(callback, ms, onWorkCancelled, parallelWorkGroup, callbackArguments) {
 				if (!!parallelWorkGroup) {
 					if (timers[parallelWorkGroup]) {
 						$timeout.cancel(timers[parallelWorkGroup]);
@@ -20,14 +28,14 @@
 					}
 					timers[parallelWorkGroup] = $timeout(function() {
 						timers[parallelWorkGroup] = null;
-						callback();
+						callback.apply(null, callbackArguments);
 					}, ms);
 				} else {
 					timer && onWorkCancelled && onWorkCancelled();
 					timer && $timeout.cancel(timer);
 					timer = $timeout(function() {
 						timer = 0;
-						callback();
+						callback.apply(null, callbackArguments);
 					}, ms);
 				}
 			};
@@ -68,6 +76,16 @@
 	});
 
 	module.factory('FrameContext', function ($rootScope) {
+		var context = { Flags: {} };
+		$rootScope.$on("contextchanged", function (scope, ctx) {
+			context = ctx;
+		});
+		var lastFlags = {};
+		function objSize(o) {
+			var i = 0;
+			angular.forEach(o, function () { i++ });
+			return i;
+		}
 		window.top.n2ctx = {
 			refresh: function (ctx) {
 			},
@@ -82,13 +100,37 @@
 			},
 			toolbarSelect: function () {
 			},
-			context: function (context) {
-				if (context.Messages && context.Messages.length) {
-					$rootScope.$broadcast("changecontext", context);
+			context: function (ctx) {
+				if (ctx.Messages && ctx.Messages.length) {
+					$rootScope.$broadcast("changecontext", { Messages: ctx.Messages });
+				}
+				if (ctx.Flags) {
+					if (objSize(lastFlags) || objSize(ctx.Flags)) {
+						var flagsChagned = false;
+						angular.forEach(lastFlags, function (value, flag) {
+							if (context.Flags[flag]) {
+								context.Flags[flag] = false;
+								flagsChagned = true;
+							}
+								
+						});
+						angular.forEach(ctx.Flags, function (value, flag) {
+							if (!context.Flags[flag]) {
+								context.Flags[flag] = true;
+								flagsChagned = true;
+							}
+						});
+						lastFlags = ctx.Flags;
+						if (flagsChagned && !$rootScope.$$phase)
+							$rootScope.$apply();
+					}
 				}
 			},
 			failure: function (response) {
 				$rootScope.$broadcast("communicationfailure", { status: response.status, statusText: response.statusText });
+			},
+			isFlagged: function (flag) {
+				return context.Flags[flag];
 			}
 		};
 		return window.top.n2ctx;
@@ -152,6 +194,11 @@
 		        node.HasChildren = data.Children.length > 0;
 		        callback && callback(node);
 		    });
+		};
+
+		res.unloadChildren = function (node, callback) {
+			if (node) node.Children = [];
+			callback && callback(node);
 		};
 
 		res.reload = function (node, callback) {
@@ -244,12 +291,24 @@
 	});
 
 	module.factory('ContextMenuFactory', function () {
-		return function(scope) {
+		return function (scope) {
 			var contextMenu = this;
-			contextMenu.show = function(node) {
-				scope.select(node);
+
+			contextMenu.appendSelection = function (url, appendPreviewQueries) {
+				url = scope.appendQuery(url, scope.Context.Paths.SelectedQueryKey + "=" + contextMenu.CurrentItem.Path + "&" + scope.Context.Paths.ItemQueryKey + "=" + contextMenu.CurrentItem.ID);
+				if (appendPreviewQueries) {
+					for (var key in scope.Context.PreviewQueries) {
+						url += "&" + key + "=" + scope.Context.PreviewQueries[key];
+					}
+				}
+				return url;
+			}
+
+			contextMenu.show = function (node) {
+
 				scope.ContextMenu.node = node;
 				scope.ContextMenu.options = [];
+				scope.ContextMenu.CurrentItem = node.Current;
 
 				for (var i in scope.Context.ContextMenu.Children) {
 					var cm = scope.Context.ContextMenu.Children[i];
@@ -258,6 +317,7 @@
 			};
 			contextMenu.hide = function() {
 				delete scope.ContextMenu.node;
+				delete scope.ContextMenu.CurrentItem;
 				delete scope.ContextMenu.options;
 				delete scope.ContextMenu.memory;
 				delete scope.ContextMenu.action;

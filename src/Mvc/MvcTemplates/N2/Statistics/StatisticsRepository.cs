@@ -22,11 +22,11 @@ namespace N2.Management.Statistics
 			this.session = session;
 		}
 
-		public override IEnumerable<Statistic> GetStatistics(DateTime from, DateTime to, int id = 0)
+		public override IEnumerable<Statistic> GetStatistics(DateTime from, DateTime to, params int[] itemIds)
 		{
 			try
 			{
-				var result = base.GetStatistics(from, to, id);
+				var result = base.GetStatistics(from, to, itemIds);
 				AdoExceptionDetected = null;
 				return result;
 			}
@@ -103,8 +103,8 @@ namespace N2.Management.Statistics
 		{
 			using (var tx = buckets.BeginTransaction())
 			{
-				var slot = uptil.GetSlot(interval);
-				var collectedBuckets = buckets.Find().Where(b => b.TimeSlot < slot).OrderBy(b => b.TimeSlot).ToArray();
+				var slotEndTime = uptil.GetSlot(interval, endOfSlot: true);
+				var collectedBuckets = buckets.Find().Where(b => b.TimeSlot < slotEndTime).OrderBy(b => b.TimeSlot).ToArray();
 				if (collectedBuckets.Length == 0)
 					return;
 
@@ -161,14 +161,27 @@ namespace N2.Management.Statistics
 			buckets.Flush();
 		}
 
-		public virtual IEnumerable<Statistic> GetStatistics(DateTime from, DateTime to, int id = 0)
+		public virtual IEnumerable<Statistic> GetStatistics(DateTime from, DateTime to, params int[] itemIds)
 		{
 			var p = Parameter.GreaterOrEqual("TimeSlot", from) & Parameter.LessThan("TimeSlot", to);
-			if (id != 0)
-				p = p & Parameter.Equal("PageID", id);
+			if (itemIds != null)
+			{
+				if (itemIds.Length == 1)
+					p = p & Parameter.Equal("PageID", itemIds[0]);
+				else if (itemIds.Length > 1)
+					p = p & Parameter.In("PageID", itemIds.OfType<object>().ToArray());
+			}
 			p = p.OrderBy("TimeSlot");
 			var data = this.statistics.Find(p).ToList();
 			return data;
+		}
+
+		public virtual int Delete(DateTime? from, DateTime? to, int? id)
+		{
+			var itemsToRemove = GetStatistics(from ?? new DateTime(2000, 1, 1), to ?? new DateTime(2100, 1, 1), id.HasValue ? new [] { id.Value } : new int[0]).ToArray();
+			this.statistics.Delete(itemsToRemove);
+			this.statistics.Flush();
+			return itemsToRemove.Length;
 		}
 	}
 }

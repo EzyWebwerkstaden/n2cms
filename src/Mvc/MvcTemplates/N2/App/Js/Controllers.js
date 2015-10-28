@@ -51,6 +51,10 @@ function findNodeRecursive(node, selectedPath) {
 		var n = findNodeRecursive(node.Children[i], selectedPath);
 		if (n) return n;
 	}
+	for (var i in node.Parts) {
+		var n = findNodeRecursive(node.Parts[i], selectedPath);
+		if (n) return n;
+	}
 	return null;
 }
 
@@ -81,7 +85,7 @@ function Uri(uri) {
 	};
 };
 
-function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Context, Content, Profile, Security, FrameContext, Translate, Eventually, LocationKeeper, Notify) {
+function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, $rootScope, Context, Content, Profile, Security, FrameContext, Translate, Eventually, LocationKeeper, Notify, EbbCallbacks) {
 	$scope.Content = Content;
 	$scope.Security = Security;
 
@@ -95,6 +99,18 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 
 		return url;
 	};
+
+	function reloadTreePreviewOptionsRecursive(node) {
+		if (!node) return;
+		node.Url = $scope.appendPreviewOptions(node.Current.PreviewUrl);
+		angular.forEach(node.Children, reloadTreePreviewOptionsRecursive);
+		node.Parts && angular.forEach(node.Parts, reloadTreePreviewOptionsRecursive);
+	}
+	
+	$scope.$watch("Context.PreviewQueries", function (q) {
+		if (!q) return;
+		reloadTreePreviewOptionsRecursive($scope.Context.Content);
+	}, true);
 
 	$scope.setPreviewQuery = function (key, value) {
 		if (value)
@@ -185,7 +201,6 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 	};
 
 	$scope.$on("changecontext", function (e, args) {
-		console.log("changeontext", e, args);
 		var current = $scope.Context.Messages;
 		var latest = args.Messages;
 		angular.forEach(args, function (value, key) {
@@ -213,8 +228,7 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 			return;
 
 		function retryStatus(message, retryTimeout) {
-			var i = $scope.Context.Flags.indexOf("CommunicationFailure");
-			if (i < 0) $scope.Context.Flags.push("CommunicationFailure");
+			$scope.Context.Flags.CommunicationFailure = true;
 
 			communicationattempts++;
 
@@ -229,8 +243,7 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 			$timeout(function () {
 				Context.status({}, function success(result) {
 					if (!result || result.Running) {
-						var i = $scope.Context.Flags.indexOf("CommunicationFailure");
-						if (i >= 0) $scope.Context.Flags.splice(i, 1);
+						$scope.Context.Flags.CommunicationFailure = false;
 
 						communicationattempts = 0;
 						Notify.show({
@@ -376,7 +389,7 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 
 			$timeout(function () {
 				$scope.refreshContext(node, versionIndex, keepFlags)
-			}, 200);
+			}, 10);
 			return true;
 		}
 	};
@@ -386,8 +399,12 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 			? findNodeRecursive($scope.Context.Content, parentPathOrNode)
 			: parentPathOrNode;
 
-		if (node)
-			Content.loadChildren(node, callback);
+		if (node){
+			Content.loadChildren(node, function () {
+				callback && callback.apply(this, arguments);
+				$scope.$emit("childrenloaded", { node: node });
+			});
+		}
 		else if (pathNotFound)
 			pathNotFound(parentPathOrNode);
 	};
@@ -403,11 +420,11 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 	};
 
 	$scope.isFlagged = function (flag) {
-		return jQuery.inArray(flag, $scope.Context.Flags) >= 0;
+		return $scope.Context.Flags[flag];
 	};
 
 	var viewExpression = /[?&]view=[^?&]*/;
-	$scope.$on("preiewloaded", function (scope, e) {
+	$rootScope.$on("preiewloaded", function (scope, e) {
 		if ($scope.Context.AppliesTo == (e.path + e.query)) {
 			//console.log("bailing out", $scope.Context.AppliesTo, "==", (e.path + e.query));
 			return;
@@ -415,13 +432,13 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Cont
 		//console.log("setting appliesTo (2)", e.path + e.query);
 		$scope.Context.AppliesTo = e.path + e.query;
 
-		$timeout(function () {
+		Eventually(function () {
 			Context.get({ selectedUrl: e.path + e.query }, function (ctx) {
 				//console.log("previewloaded -> contextchanged", e, ctx);
 				angular.extend($scope.Context, ctx);
 				$scope.$emit("contextchanged", $scope.Context);
 			});
-		}, 200);
+		}, 100);
 	});
 
 	$scope.evaluateExpression = function (expr) {
@@ -499,6 +516,12 @@ function TrunkCtrl($scope, $rootScope, Content, SortHelperFactory) {
 	$scope.$watch("Context.Content", function (content) {
 		$scope.node = content;
 	});
+	$scope.$watch("Context.SelectedNode", function (node, prev) {
+		if (prev)
+			delete prev.Active;
+		if (node)
+			node.Active = true;
+	});
 	$rootScope.$on("contextchanged", function (scope, ctx) {
 		if (ctx.Actions.refresh) {
 			$scope.reloadChildren(ctx.Actions.refresh, function () {
@@ -508,21 +531,21 @@ function TrunkCtrl($scope, $rootScope, Content, SortHelperFactory) {
 		}
 		else if (ctx.CurrentItem)
 			$scope.Context.SelectedNode = findNodeRecursive($scope.Context.Content, ctx.CurrentItem.Path);
-		else
-			$scope.Context.SelectedNode = null;
-
-		//if (ctx.Organize)
-		//	$scope.setPreviewQuery("edit", "drag");
-		//else
-		//	$scope.setPreviewQuery("edit", null);
 	});
 	$scope.nodeClicked = function (node) {
 		$scope.Context.User.Settings.Selected = node.Current.Path;
 		$scope.select(node);
 	}
 	$scope.toggle = function (node) {
-		if (!node.Expanded && !node.Children.length) {
-			Content.loadChildren(node);
+		if (node.Expanded) {
+			if (node.Children.length && !node.Current.MetaInformation.placeholder)
+				Content.unloadChildren(node);
+		} else {
+			if (!node.Children.length) {
+				Content.loadChildren(node, function () {
+					$scope.$emit("childrenloaded", { node: node });
+				});
+			}
 		}
 		node.Expanded = !node.Expanded;
 	};
@@ -556,7 +579,13 @@ function TrunkCtrl($scope, $rootScope, Content, SortHelperFactory) {
 					if (!zone)
 						continue;
 					var child = {
-						Current: { Title: zone, IconClass: "fa fa-columns silver", MetaInformation: [], PreviewUrl: new Uri(node.Current.PreviewUrl).appendQuery("n2zone", zone).toString() },
+						Current: {
+							Title: zone,
+							IconClass: "fa fa-columns silver",
+							MetaInformation: { placeholder: { ToolTip: "", Text: "" } },
+							PreviewUrl: new Uri(node.Current.PreviewUrl).appendQuery("n2zone", zone).toString(),
+							Path: node.Current.Path
+						},
 						HasChildren: true,
 						Children: zones[zone]
 					};
@@ -614,13 +643,11 @@ function MenuCtrl($rootScope, $scope, Security) {
 	};
 	$scope.$watch("Context.User.Settings.ViewPreference", function (viewPreference, previousPreference) {
 		$scope.setPreviewQuery("view", viewPreference);
-		var existingIndex = jQuery.inArray("View" + previousPreference, $scope.Context.Flags);
-		if (existingIndex >= 0)
-			$scope.Context.Flags.splice(existingIndex, 1);
-		$scope.Context.Flags.push("View" + viewPreference);
+		$scope.Context.Flags["View" + previousPreference] = false;
+		$scope.Context.Flags["View" + viewPreference] = true;
 	});
 	$rootScope.$on("contextchanged", function (scope, ctx) {
-		ctx.Flags.push("View" + ctx.User.Settings.ViewPreference);
+		ctx.Flags["View" + ctx.User.Settings.ViewPreference] = true;
 	});
 }
 
@@ -654,23 +681,8 @@ function MenuNodeLastChildCtrl($scope, $timeout) {
 	});
 }
 
-//function PageActionCtrl($scope, Content) {
-//	$scope.dispose = function () {
-//		Content.remove(Content.applySelection({}, node.Current), function () {
-//			$scope.reloadChildren(getParentPath($scope.Context.CurrentItem.Path));
-//		});
-//	};
-//}
-
-function PreviewCtrl($scope, $rootScope) {
-	$scope.frameLoaded = function (e) {
-		try {
-			var loco = e.target.contentWindow.location;
-			$scope.$emit("preiewloaded", { path: loco.pathname, query: loco.search, url: loco.toString() });
-		} catch (ex) {
-			window.console && console.log("frame access exception", ex);
-		}
-	};
+function PreviewCtrl() {
+	console.warn("PreviewCtrl obsolete");
 }
 
 function AddCtrl($scope, Content) {
@@ -747,71 +759,6 @@ function SearchCtrl($scope, $rootScope, Content, Eventually) {
 			$scope.$digest();
 		}, 400);
 	});
-}
-
-function MessagesCtrl($scope, $rootScope, $sce, Context, Content, Confirm) {
-	$scope.messages = {
-		show: false,
-		list: null,
-		toggle: function () {
-			if (this.show) {
-				this.close();
-			} else {
-				this.open($scope.Context.Messages)
-			}
-		},
-		open: function (messages) {
-			this.show = true;
-			this.list = messages
-		},
-		close: function (messages) {
-			this.show = false;
-			this.list = null;
-		},
-		removePermanently: function (message) {
-			console.log("remove", message);
-
-			Confirm({
-				title: "Remove permanently for all users?",//Translate("confirm.unpublish.title"),
-				message: message,
-				template: "<b class='ico fa fa-envelope'></b> {{settings.message.Title}}",
-				confirmed: function () {
-					Content.removeMessage({ ID: message.ID, Source: message.Source.Name }, $scope.messages.loadAll);
-				}
-			});
-		},
-		clear: function () {
-			var max = null;
-			angular.forEach(this.list, function (message) {
-				if (!max || max < message.Updated)
-					max = message.Updated;
-			});
-			$scope.Context.User.Settings.LastDismissed = max;
-			$scope.Context.Messages = [];
-			$scope.saveUserSettings();
-			this.close();
-		},
-		loadAll: function () {
-			delete $scope.Context.User.Settings.LastDismissed;
-			Context.messages(Content.applySelection({}, $scope.Context.CurrentItem), function (result) {
-				$scope.messages.list = result.Messages;
-				$scope.Context.Messages = result.Messages;
-			});
-			$scope.saveUserSettings();
-		}
-	};
-
-	$scope.$watch("Context.Messages", function (messages) {
-		if (messages && messages.length) {
-			angular.forEach(messages, function (message) {
-				if (message.Alert) {
-					message.Expanded = true;
-					$scope.messages.open(messages);
-				}
-			});
-		} else if ($scope.messages.show)
-			$scope.messages.list = messages;
-	})
 }
 
 function PageInfoCtrl($scope, Content) {
@@ -893,9 +840,9 @@ function FrameActionCtrl($scope, $rootScope, $timeout, FrameManipulator) {
 		$scope.$parent.action = null;
 		$scope.$parent.item.Children = [];
 		var extraFlags = FrameManipulator.getFlags();
-		for (var i in extraFlags) {
-			$scope.Context.Flags.push(extraFlags[i]);
-		}
+		angular.forEach(extraFlags, function (flag) {
+			$scope.Context.Flags[flag] = true;
+		})
 
 		if ($scope.isFlagged("Management")) {
 			function loadActions() {
@@ -944,4 +891,67 @@ function NotifyCtrl($scope, $timeout, Notify) {
 			$scope.$digest();
 		}, 10);
 	});
+}
+
+function MessagesCtrl($scope, $rootScope, $sce, Context, Content, Confirm) {
+	$scope.messages = {
+		show: false,
+		list: null,
+		toggle: function () {
+			if (this.show) {
+				this.close();
+			} else {
+				this.open($scope.Context.Messages)
+			}
+		},
+		open: function (messages) {
+			this.show = true;
+			this.list = messages
+		},
+		close: function (messages) {
+			this.show = false;
+			this.list = null;
+		},
+		removePermanently: function (message) {
+			Confirm({
+				title: "Remove permanently for all users?",//Translate("confirm.unpublish.title"),
+				message: message,
+				template: "<b class='ico fa fa-envelope'></b> {{settings.message.Title}}",
+				confirmed: function () {
+					Content.removeMessage({ ID: message.ID, Source: message.Source.Name }, $scope.messages.loadAll);
+				}
+			});
+		},
+		clear: function () {
+			var max = null;
+			angular.forEach(this.list, function (message) {
+				if (!max || max < message.Updated)
+					max = message.Updated;
+			});
+			$scope.Context.User.Settings.LastDismissed = max;
+			$scope.Context.Messages = [];
+			$scope.saveUserSettings();
+			this.close();
+		},
+		loadAll: function () {
+			delete $scope.Context.User.Settings.LastDismissed;
+			Context.messages(Content.applySelection({}, $scope.Context.CurrentItem), function (result) {
+				$scope.messages.list = result.Messages;
+				$scope.Context.Messages = result.Messages;
+			});
+			$scope.saveUserSettings();
+		}
+	};
+
+	$scope.$watch("Context.Messages", function (messages) {
+		if (messages && messages.length) {
+			angular.forEach(messages, function (message) {
+				if (message.Alert) {
+					message.Expanded = true;
+					$scope.messages.open(messages);
+				}
+			});
+		} else if ($scope.messages.show)
+			$scope.messages.list = messages;
+	})
 }

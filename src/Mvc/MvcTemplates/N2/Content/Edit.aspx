@@ -8,7 +8,7 @@
 <asp:Content ID="ch" ContentPlaceHolderID="Head" runat="server">
 </asp:Content>
 <asp:Content ID="ct" ContentPlaceHolderID="Toolbar" runat="server">
-	<edit:ButtonGroup CssClass="btn-primary" runat="server">
+	<edit:ButtonGroup CssClass="btn-primary" runat="server" OnClientClick="return !n2ctx.isFlagged('ShutdownEditing') || confirm('Editing is currently disabled. If you continue right now changes may be lost. Do you want to continue?')">
 		<asp:LinkButton ID="btnSavePublish" data-icon-class="fa fa-play-circle" 
 			OnCommand="OnPublishCommand" runat="server" 
 			CssClass="command iconed publish" 
@@ -69,7 +69,7 @@
 		</div>
 		<div class="future-panel-backdrop modal-backdrop fade in" style="display:none"></div>
 
-		<n2:ItemEditor ID="ie" runat="server" />
+		<n2:ItemEditor ID="ie" runat="server" EnableAutoSave="true" />
 	</edit:PermissionPanel>
 
 		<script type="text/javascript">
