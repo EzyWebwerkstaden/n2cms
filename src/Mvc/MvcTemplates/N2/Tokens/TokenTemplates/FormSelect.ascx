@@ -8,7 +8,7 @@
 	string name = token.GetOptionalInputName(0, 1);
 %>
 <span class="formfield formselect">
-<select name="<%= name %>">
+<select name="<%= name %>" class="form-control">
 	<% foreach(var opt in options) { %>
 	<option><%= opt %></option>
 	<% } %>

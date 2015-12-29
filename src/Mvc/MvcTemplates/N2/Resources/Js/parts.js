@@ -120,7 +120,7 @@
 				if (allowed.indexOf(type + ",") >= 0) {
 				    var dropZoneDiv = $("<div></div>").addClass("dropPoint below");
 
-				    if (type == "ContentBox" || type == "PredefinedSearch") {
+				    if (type == "ContentBox" || type == "PredefinedSearch"  || type == "CampaignBox" || type == "LastMinute") {
 				        var item = $(dragged).next();
 				        dropZoneDiv.css('position', item.css('position'));
 				        dropZoneDiv.css('left', item.css('left'));
@@ -138,7 +138,7 @@
 
 						    var dropZoneDiv = $("<div></div>").addClass("dropPoint before").attr('title', i);
 
-						    if (data == "ContentBox" || data == "PredefinedSearch") {
+						    if (type == "ContentBox" || type == "PredefinedSearch" || type == "CampaignBox" || type == "LastMinute") {
 						        var item = $(this);
 						        dropZoneDiv.css('position', item.css('position'));
 						        dropZoneDiv.css('left', item.css('left'));

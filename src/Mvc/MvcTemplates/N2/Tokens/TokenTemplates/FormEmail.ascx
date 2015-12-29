@@ -9,5 +9,5 @@
         name = name.Replace("|required", "");
 %>
 <span class="formfield forminput">
-<input name="<%= name %>" <%=isRequired ? "required" : "" %> class="form-control" />
+<input type="email" name="<%= name %>" <%=isRequired ? "required" : "" %> class="form-control" />
 </span>

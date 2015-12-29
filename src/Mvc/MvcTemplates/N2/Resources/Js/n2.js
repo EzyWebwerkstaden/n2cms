@@ -1,24 +1,24 @@
 ﻿// Avoid `console` errors in browsers that lack a console.
 (function () {
-	var method;
-	var noop = function () { };
-	var methods = [
+    var method;
+    var noop = function () { };
+    var methods = [
         'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
         'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
         'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
         'timeStamp', 'trace', 'warn'
-	];
-	var length = methods.length;
-	var console = (window.console = window.console || {});
+    ];
+    var length = methods.length;
+    var console = (window.console = window.console || {});
 
-	while (length--) {
-		method = methods[length];
+    while (length--) {
+        method = methods[length];
 
-		// Only stub undefined methods.
-		if (!console[method]) {
-			console[method] = noop;
-		}
-	}
+        // Only stub undefined methods.
+        if (!console[method]) {
+            console[method] = noop;
+        }
+    }
 }());
 
 // Place any jQuery/helper plugins in here.
@@ -26,20 +26,20 @@
 var N2 = {};
 
 N2.splitter = function (master, slave, options) {
-	var settings = $.extend({}, N2.splitter.defaults, options);
-	var $master = $(master);
-	var $slave = $(slave);
-	$(settings.dragbarSelector).mousedown(function (e) {
-		$master = $(master);
-		$slave = $(slave);
-		e.preventDefault();
+    var settings = $.extend({}, N2.splitter.defaults, options);
+    var $master = $(master);
+    var $slave = $(slave);
+    $(settings.dragbarSelector).mousedown(function (e) {
+        $master = $(master);
+        $slave = $(slave);
+        e.preventDefault();
         $(document).mousemove(function (e) {
-        	$master.css("width", e.pageX + "px");
-        	$slave.css({
-        		left: $master.outerWidth(true) + "px",
-        		width: ($(window).width() - $master.outerWidth(true) - ($slave.outerWidth(true) - $slave.width())) + "px"
-        	});
-        	$("html").css("cursor", "w-resize")
+            $master.css("width", e.pageX + "px");
+            $slave.css({
+                left: $master.outerWidth(true) + "px",
+                width: ($(window).width() - $master.outerWidth(true) - ($slave.outerWidth(true) - $slave.width())) + "px"
+            });
+            $("html").css("cursor", "w-resize")
         });
         $("#page-preview-frame-cover").show();
     });
@@ -112,16 +112,35 @@ N2.slidingLoader.prototype = {
 };
 
 $(function () {
-	var loader = new N2.slidingLoader(".sliding-loader", { loaderImage: "Resources/img/sliding-loader.png" });
+    var loader = new N2.slidingLoader(".sliding-loader", { loaderImage: "Resources/img/sliding-loader.png" });
 
-	loader.start();
+    loader.start();
 
-	setTimeout(function () {
-		loader.stop();
-	}, 5000);
+    setTimeout(function () {
+        loader.stop();
+    }, 5000);
+
+    setTimeout(function () {
+        $(".change-format").click(function (e) {
+            e.preventDefault();
+            var size = $(this).attr("data-size");
+            $("#page-preview-frame").width(size == 0 ? $("#main-area").width() : size);
+        });
+
+        $(".open-translation").click(function (e) {
+            e.preventDefault();
+            $("#page-preview-frame").attr('src', '/Translation');
+        });
+
+        $(".load-form").click(function (e) {
+            e.preventDefault();
+            $("#page-preview-frame").attr('src', '/Form/Admin');
+        });
+
+    }, 8000);
 
 });
 
 $.fn.n2splitter = function (master, slave) {
-	new N2.splitter(master, slave);
+    new N2.splitter(master, slave);
 }

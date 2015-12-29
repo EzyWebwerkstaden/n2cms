@@ -4,6 +4,6 @@
 <%
 	string name = Model ?? Html.DisplayableToken().GenerateInputName();
 %>
-<span class="formfield formtextarea">
+<span class="formfield formtextarea" class="form-control">
 <textarea name="<%= name %>"></textarea>
 </span>
