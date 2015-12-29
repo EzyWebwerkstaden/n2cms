@@ -86,3 +86,6 @@ src/Framework/Extensions/x86/
 .DS_Store
 *.jpg
 *.pdf
+
+# Visual Studio 2015 cache/options directory
+.vs/

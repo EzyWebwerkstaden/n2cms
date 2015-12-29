@@ -21,6 +21,7 @@ namespace N2.Details
         Standard = 0,
         Basic = 3,
         Full = 4,
+        FreeForm = 5
     }
 
     /// <summary>Attribute used to mark properties as editable. This attribute is predefined to use the <see cref="N2.Web.UI.WebControls.FreeTextArea"/> web control as editor.</summary>

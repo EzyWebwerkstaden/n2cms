@@ -19,19 +19,24 @@ namespace N2.Configuration
 			set { base["duration"] = value; }
 		}
 
-		[ConfigurationProperty("varyByParam", DefaultValue = "*")]
-		public string VaryByParam
-		{
-			get { return (string)base["varyByParam"]; }
-			set { base["varyByParam"] = value; }
-		}
-
-		[ConfigurationProperty("varyByHeader", DefaultValue = "")]
-		public string VaryByHeader
-		{
-			get { return (string)base["varyByCustom"]; }
-			set { base["varyByCustom"] = value; }
-		}
+        [ConfigurationProperty("varyByParam", DefaultValue = "*")]
+        public string VaryByParam
+        {
+            get { return (string)base["varyByParam"]; }
+            set { base["varyByParam"] = value; }
+        }
+        [ConfigurationProperty("varyByCustom", DefaultValue = "")]
+        public string VaryByCustom
+        {
+            get { return (string)base["varyByCustom"]; }
+            set { base["varyByCustom"] = value; }
+        }
+        [ConfigurationProperty("varyByHeader", DefaultValue = "")]
+        public string VaryByHeader
+        {
+            get { return (string)base["varyByHeader"]; }
+            set { base["varyByHeader"] = value; }
+        }
 
 		[ConfigurationProperty("varyByCustom", DefaultValue = "")]
 		public string VaryByCustom
@@ -59,6 +64,6 @@ namespace N2.Configuration
 		{
 			get { return (OutputCacheInvalidationMode)base["invalidateOnChangesTo"]; }
 			set { base["invalidateOnChangesTo"] = value; }
-		}
 	}
+}
 }

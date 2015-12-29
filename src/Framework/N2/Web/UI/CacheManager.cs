@@ -16,6 +16,7 @@ namespace N2.Web.UI
 
         bool enabled = false;
         string varyByParam = "*";
+        string varyByCustom = "";
         string varyByHeader = "";
         string cacheProfile = "";
 		string varyByCustom = "";
@@ -33,6 +34,7 @@ namespace N2.Web.UI
         {
             enabled = config.OutputCache.Enabled;
             varyByParam = config.OutputCache.VaryByParam;
+            varyByCustom = config.OutputCache.VaryByCustom;
             varyByHeader = config.OutputCache.VaryByHeader;
 			varyByCustom = config.OutputCache.VaryByCustom;
             cacheProfile = config.OutputCache.CacheProfile;
@@ -90,7 +92,7 @@ namespace N2.Web.UI
 		}
 
 		[Obsolete]
-		public virtual void AddCacheInvalidation(HttpResponse response)
+        public virtual void AddCacheInvalidation(HttpResponse response)
         {
 			AddCacheDependency(response, new ContentCacheDependency(persister));
         }
@@ -99,8 +101,8 @@ namespace N2.Web.UI
 		{
 			if (dependency != null)
 				response.AddCacheDependency(dependency);
-			response.Cache.AddValidationCallback(ValidateCacheRequest, null);
-		}
+            response.Cache.AddValidationCallback(ValidateCacheRequest, null);
+        }
 
         public virtual OutputCacheParameters GetOutputCacheParameters()
         {
@@ -117,11 +119,18 @@ namespace N2.Web.UI
             }
             parameters.Enabled = Enabled;
             parameters.Location = OutputCacheLocation.Server;
-			if (!string.IsNullOrEmpty(varyByHeader))
-				parameters.VaryByHeader = varyByHeader;
-			if (!string.IsNullOrEmpty(varyByCustom))
-				parameters.VaryByCustom = varyByCustom;
-			parameters.VaryByParam = varyByParam;
+            //parameters.NoStore = NoStore;
+            //parameters.SqlDependency = SqlDependency;
+            //parameters.VaryByContentEncoding = VaryByContentEncoding;
+            //parameters.VaryByControl = VaryByControl;
+            //parameters.VaryByCustom = VaryByCustom;
+            if (!string.IsNullOrEmpty(varyByHeader))
+                parameters.VaryByHeader = varyByHeader;
+            if (!string.IsNullOrEmpty(varyByCustom))
+                parameters.VaryByCustom = varyByCustom;
+            if (!string.IsNullOrEmpty(varyByHeader))
+                parameters.VaryByHeader = varyByHeader;
+            parameters.VaryByParam = varyByParam;
             return parameters;
         }
     }

@@ -178,21 +178,23 @@ namespace N2.Web.UI.WebControls
                     overrides["format_tags"] = overrides["format_tags"].Remove(overrides["format_tags"].Length - 1, 1);
             }
 
-
             //switch toolbar
             switch (editorMode)
             {
                 case EditorModeSetting.Basic:
-                    overrides["toolbar"] = "[{ name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ] }, '/', { name: 'basicstyles', items : [ 'Bold','Italic','Underline' ] },{ name: 'paragraph', items : [ 'NumberedList','BulletedList' ] }]";
+                    overrides["toolbar"] = "[{ name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo','doksoft_bootstrap_advanced_blocks', 'doksoft_bootstrap_block_conf', 'doksoft_bootstrap_templates', 'doksoft_bootstrap_table', 'doksoft_bootstrap_button' ] }, '/', { name: 'basicstyles', items : [ 'Bold','Italic','Underline' ] },{ name: 'paragraph', items : [ 'NumberedList','BulletedList'] }]";
                     break;
                 case EditorModeSetting.Standard:
-                    overrides["toolbar"] = "[{ name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo' ] }, { name: 'links', items : [ 'Link','Unlink','Anchor' ] }, { name: 'insert', items : [ 'Image','Table','HorizontalRule','SpecialChar' ] },{ name: 'tools', items : [ 'Maximize'] }, { name: 'document', items : [ 'Source'] }, '/', { name: 'basicstyles', items : [ 'Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] }, { name: 'paragraph', items : [ 'NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote' ] },{ name: 'styles', items : [ 'Styles','Format' ] }]";
+                    overrides["toolbar"] = "[{ name: 'clipboard', items : [ 'Cut','Copy','Paste','PasteText','PasteFromWord','-','Undo','Redo','doksoft_bootstrap_advanced_blocks', 'doksoft_bootstrap_block_conf', 'doksoft_bootstrap_templates', 'doksoft_bootstrap_table', 'doksoft_bootstrap_button' ] }, { name: 'links', items : [ 'Link','Unlink','Anchor' ] }, { name: 'insert', items : [ 'Image','Table','HorizontalRule','SpecialChar' ] },{ name: 'tools', items : [ 'Maximize'] }, { name: 'document', items : [ 'Source'] }, '/', { name: 'basicstyles', items : [ 'Bold','Italic','Underline','Strike','Subscript','Superscript','-','RemoveFormat' ] }, { name: 'paragraph', items : [ 'NumberedList','BulletedList','-','Outdent','Indent','-','Blockquote','freeForm' ] },{ name: 'styles', items : [ 'Styles','Format' ] }]";
                     break;
             }
 
             if (customConfig.Count > 0)
                 foreach (var key in customConfig.AllKeys)
                     overrides[key] = customConfig[key].Value;
+
+            if (editorMode == EditorModeSetting.FreeForm && customConfig["freeformToolbar"] != null)
+                overrides["toolbar"] = customConfig["freeformToolbar"].Value;
 
             return ToJsonString(overrides);
         }
