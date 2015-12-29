@@ -38,13 +38,6 @@ namespace N2.Configuration
             set { base["varyByHeader"] = value; }
         }
 
-		[ConfigurationProperty("varyByCustom", DefaultValue = "")]
-		public string VaryByCustom
-		{
-			get { return (string)base["varyByCustom"]; }
-			set { base["varyByCustom"] = value; }
-		}
-
 		[ConfigurationProperty("cacheProfile")]
 		public string CacheProfile
 		{

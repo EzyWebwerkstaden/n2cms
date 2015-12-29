@@ -16,7 +16,6 @@ namespace N2.Web.UI
 
         bool enabled = false;
         string varyByParam = "*";
-        string varyByCustom = "";
         string varyByHeader = "";
         string cacheProfile = "";
 		string varyByCustom = "";
@@ -34,7 +33,6 @@ namespace N2.Web.UI
         {
             enabled = config.OutputCache.Enabled;
             varyByParam = config.OutputCache.VaryByParam;
-            varyByCustom = config.OutputCache.VaryByCustom;
             varyByHeader = config.OutputCache.VaryByHeader;
 			varyByCustom = config.OutputCache.VaryByCustom;
             cacheProfile = config.OutputCache.CacheProfile;

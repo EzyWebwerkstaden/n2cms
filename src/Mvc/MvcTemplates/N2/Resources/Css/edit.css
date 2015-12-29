@@ -225,11 +225,14 @@ body.rightExpanded #content {
 
 .framed .textEditor {
     width: 530px;
+    box-sizing: initial;
+
 }
 
 .framed .textEditorReadOnly {
     width: 426px;
     opacity: .5;
+    box-sizing: initial;
 }
 
 .framed .titleEditor {
@@ -247,6 +250,7 @@ body.rightExpanded #content {
 
 .framed .editDetail .mediaSelector input {
     text-indent: 30px;
+    box-sizing: initial;
 }
 
 .framed .editDetail .mediaSelector .showLayoverButton {
@@ -255,6 +259,7 @@ body.rightExpanded #content {
     border: none;
     background-color: transparent;
     z-index: 999;
+    font: initial;
 }
 
 .framed .clearButton {
@@ -762,4 +767,9 @@ div.tagsinput {
 
 .editDetail.WithEditableTemplateSelection select {
     width: 220px;
+}
+
+
+.itemEditor *{
+	box-sizing: initial;
 }
