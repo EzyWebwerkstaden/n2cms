@@ -362,7 +362,7 @@
       <SubType>Designer</SubType>
     </Content>
     <Content Include="Roles\App_LocalResources\Edit.aspx.resx" />
-    <Content Include="Content\Navigation\App_LocalResources\MediaBrowser.aspx.resx" />
+    <EmbeddedResource Include="Content\Navigation\App_LocalResources\MediaBrowser.aspx.resx" />
     <None Include="Content\Dependencies.aspx" />
     <Content Include="Files\FileSystem\UploadFile.ashx" />
     <Content Include="Installation\log4net.config" />
@@ -384,6 +384,7 @@
     <Content Include="Resources\Js\jquery-1.11.0.min.map" />
     <Content Include="packages.config" />
     <None Include="Properties\PublishProfiles\asd.pubxml" />
+    <None Include="Properties\PublishProfiles\management.pubxml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\..\Framework\AssemblyVersion.cs">
