@@ -44,10 +44,10 @@ namespace N2.Edit.FileSystem
         {
             var dir = Selection.SelectedItem as Directory;
             directories = dir.GetDirectories();
-            files = dir.GetFiles();
+            //files = dir.GetFiles();
             
             rptDirectories.DataSource = directories;
-            rptFiles.DataSource = files;
+            //rptFiles.DataSource = files;
             DataBind();
         }
 
@@ -77,6 +77,14 @@ namespace N2.Edit.FileSystem
                 return string.Format("background-image:url({0})", N2.Edit.Web.UI.Controls.ResizedImage.GetResizedImageUrl(url, 100, 100, N2.Web.Drawing.ImageResizeMode.Fit));
             else
                 return "";
+        }
+
+        protected void showFiles_OnClick(object sender, EventArgs e)
+        {
+            var dir = Selection.SelectedItem as Directory;
+            files = dir.GetFiles();
+            rptFiles.DataSource = files;
+            DataBind();
         }
     }
 }

@@ -23,7 +23,7 @@
 				    </div>
 			    </ItemTemplate>
 		    </asp:Repeater>
-		
+		    
 		    <asp:Repeater ID="rptFiles" runat="server">
 			    <ItemTemplate>
 				    <div class="file">
@@ -35,7 +35,7 @@
 			    </ItemTemplate>
 		    </asp:Repeater>
 	    </div>
-
+        <asp:Button runat="server" ID="showFiles" OnClick="showFiles_OnClick" Text="Show files"/>
 		<edit:PermissionPanel id="ppPermitted" RequiredPermission="Write" runat="server" meta:resourceKey="ppPermitted">
 			<edit:FileUpload runat="server" />
 		</edit:PermissionPanel>

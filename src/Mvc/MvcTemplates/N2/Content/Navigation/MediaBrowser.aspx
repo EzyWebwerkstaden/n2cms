@@ -69,14 +69,14 @@
                         data-name="<%= f.Title %>" data-isimage="true" data-url="<%= f.Url %>"
                         style="background-image:url('<%= img %>');" >
                         <label><%= f.Title %></label>
-                        <% if (f.Children!=null && f.Children.Count > 0) { %>
+<%--                        <% if (f.Children!=null && f.Children.Count > 0) { %>
                         <div class="image-sizes">
                             <em class="<%= string.IsNullOrEmpty(mediaBrowserModel.PreferredSize) ? "selected" : "" %>" data-size="<%= f.Size %>" data-url="<%= f.Url %>">default</em>
                             <% foreach(var ch in f.Children) { %>
                             <em class="<%= mediaBrowserModel.PreferredSize==ch.SizeName ? "selected" : "" %>" data-size="<%= ch.Size %>" data-url="<%= ch.Url %>"><%= ch.SizeName %></em>
                             <%} %>
                         </div>
-                        <%} %>
+                        <%} %>--%>
                        </li>
                     <%} else { %>
                     <li data-i="<%= counter++ %>" class="file" data-size="<%= f.Size %>" data-date="<%= f.Date %>" data-isimage="false" data-url="<%= f.Url %>"
