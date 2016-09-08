@@ -57,13 +57,13 @@ namespace N2.Management.Api
             var adapter = adapters.ResolveAdapter<NodeAdapter>(structure.Current);
 
             var children = structure.Children.Select(c => CreateNode(c, adapters, filter)).ToList();
-			return new Node<TreeNode>
-			{
-				Current = adapter.GetTreeNode(structure.Current),
-				HasChildren = adapter.HasChildren(new Query { Parent = structure.Current, Filter = filter, Interface = Interfaces.Managing, OnlyPages = true }),
-				Expanded = children.Any(),
-				Children = children
-			};
+            return new Node<TreeNode>
+            {
+                Current = adapter.GetTreeNode(structure.Current),
+                HasChildren = adapter.HasChildren(new Query { Parent = structure.Current, Filter = filter, Interface = Interfaces.Managing, OnlyPages = true }),
+                Expanded = children.Any(),
+                Children = children
+            };
         }
 
         internal static HierarchyNode<ContentItem> BuildBranchStructure(ItemFilter filter, IContentAdapterProvider adapters, ContentItem selectedItem, ContentItem root)
@@ -71,8 +71,12 @@ namespace N2.Management.Api
             var structure = new BranchHierarchyBuilder(selectedItem, root, true) { UseMasterVersion = false }
                 .Children((item) =>
                 {
-                    var q = new N2.Persistence.Sources.Query { Parent = item, OnlyPages = true, Interface = Interfaces.Managing, Filter = filter };
-                    return adapters.ResolveAdapter<NodeAdapter>(item).GetChildren(q);
+                    if (item.Title != "upload")
+                    {
+                        var q = new N2.Persistence.Sources.Query { Parent = item, OnlyPages = true, Interface = Interfaces.Managing, Filter = filter };
+                        return adapters.ResolveAdapter<NodeAdapter>(item).GetChildren(q);
+                    }
+                    return new List<ContentItem>();
                 })
                 .Build();
             return structure;
@@ -90,11 +94,11 @@ namespace N2.Management.Api
             return structure;
         }
 
-		internal static T TryGet<T>(this IDictionary<string, T> settings, string key)
-		{
-			if (settings.ContainsKey(key))
-				return settings[key];
-			return default(T);
-		}
+        internal static T TryGet<T>(this IDictionary<string, T> settings, string key)
+        {
+            if (settings.ContainsKey(key))
+                return settings[key];
+            return default(T);
+        }
     }
 }
