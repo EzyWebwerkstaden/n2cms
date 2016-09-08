@@ -125,7 +125,6 @@ namespace N2.Edit
 		protected void OnPublishCommand(object sender, CommandEventArgs e)
 		{
 			var ctx = ie.CreateCommandContext();
-			ApplySortInfo(ctx);
 			Commands.Publish(ctx);
 
 			Engine.AddActivity(new ManagementActivity { Operation = "Publish", PerformedBy = User.Identity.Name, Path = ie.CurrentItem.Path, ID = ie.CurrentItem.ID });
@@ -145,7 +144,6 @@ namespace N2.Edit
 		protected void OnPreviewCommand(object sender, CommandEventArgs e)
 		{
 			var ctx = ie.CreateCommandContext();
-			ApplySortInfo(ctx);
 			Commands.Save(ctx);
 
 			var page = Find.ClosestPage(ctx.Content);
@@ -215,7 +213,15 @@ namespace N2.Edit
 					Response.Redirect(ctx.RedirectUrl.ToUrl().AppendQuery("returnUrl", redirectUrl, unlessNull: true));
 
 				Refresh(ctx.Content, ToolbarArea.Navigation);
-				Refresh(ctx.Content, redirectUrl ?? Engine.GetContentAdapter<NodeAdapter>(ctx.Content).GetPreviewUrl(ctx.Content));
+				var previewUrl = (redirectUrl ?? Engine.GetContentAdapter<NodeAdapter>(ctx.Content).GetPreviewUrl(ctx.Content)).ToUrl();
+				previewUrl = previewUrl.SetQueryParameter("refresh", "true");
+				previewUrl = previewUrl.SetQueryParameter("n2scroll", Request["n2scroll"]);
+				if (!string.IsNullOrEmpty(Request["n2reveal"]))
+					previewUrl = previewUrl.SetQueryParameter("n2reveal", Request["n2reveal"]);
+				else if (!ctx.Content.IsPage)
+					previewUrl = previewUrl.SetQueryParameter("n2reveal", "part" + (string.IsNullOrEmpty(ctx.Content.GetVersionKey()) ? ctx.Content.ID.ToString() : ctx.Content.GetVersionKey()));
+
+				Refresh(ctx.Content, previewUrl);
 			}
 		}
 
@@ -322,7 +328,7 @@ namespace N2.Edit
 
 			if (!string.IsNullOrEmpty(discriminator))
 			{
-				ie.Initialize(discriminator, template, Selection.SelectedItem);
+				ie.Initialize(discriminator, template, Selection.GetSelectionParent());
 			}
 			else if (!string.IsNullOrEmpty(dataType))
 			{
@@ -333,7 +339,7 @@ namespace N2.Edit
 				if (d == null)
 					throw new N2Exception("Couldn't find any definition for type '" + t + "'");
 				ie.Discriminator = d.Discriminator;
-				ie.ParentPath = Selection.SelectedItem.Path;
+				ie.ParentPath = Selection.GetSelectionParent().Path;
 			}
 			else
 			{
@@ -345,6 +351,13 @@ namespace N2.Edit
 				ie.ZoneName = Request["zoneName"];
 			}
 			dpFuturePublishDate.SelectedDate = ie.CurrentItem.Published;
+
+			ie.CreatingContext += Ie_CreatingContext;
+		}
+
+		private void Ie_CreatingContext(object sender, CommandContext args)
+		{
+			ApplySortInfo(args);
 		}
 
 		private void LoadZones()

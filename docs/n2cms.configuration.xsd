@@ -177,6 +177,13 @@
 									<xs:attribute name="ckEditorJsPath" type="xs:string" use="optional" />
 								</xs:complexType>
 							</xs:element>
+							<xs:element name="previewResources" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="angularJsRoot" type="xs:string" use="optional" />
+									<xs:attribute name="jQueryJsPath" type="xs:string" use="optional" />
+									<xs:attribute name="iconsCssPath" type="xs:string" use="optional" />
+								</xs:complexType>
+							</xs:element>
 							<xs:element name="vpp" minOccurs="0">
 								<xs:complexType>
 									<xs:all>
@@ -781,6 +788,7 @@
 											</xs:restriction>
 										</xs:simpleType>
 									</xs:attribute>
+									<xs:attribute name="errorReportingEnabled" type="xs:boolean" use="optional" />
 								</xs:complexType>
 							</xs:element>
 							<xs:element name="organize" minOccurs="0">
