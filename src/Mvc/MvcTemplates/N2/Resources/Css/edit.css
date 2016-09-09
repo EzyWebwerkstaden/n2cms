@@ -226,7 +226,6 @@ body.rightExpanded #content {
 .framed .textEditor {
     width: 530px;
     box-sizing: initial;
-
 }
 
 .framed .textEditorReadOnly {
@@ -770,6 +769,158 @@ div.tagsinput {
 }
 
 
-.itemEditor *{
-	box-sizing: initial;
+.itemEditor * {
+    box-sizing: initial;
+}
+
+
+.EditableDropDownOverlayColor .brown {
+    opacity: 1;
+    background-color: #825d36;
+    color: #fff;
+}
+
+.EditableDropDownOverlayColor .light-blue {
+    opacity: 1;
+    background-color: #cce3f1;
+    color: #061551;
+}
+
+.EditableDropDownOverlayColor .light-blue-notext {
+    opacity: 1;
+    background-color: #cce3f1;
+    color: #cce3f1;
+}
+
+.EditableDropDownOverlayColor .blue {
+    opacity: 1;
+    background-color: #061551;
+    color: #fff;
+}
+
+.EditableDropDownOverlayColor .blue-notext {
+    background-color: #061551;
+    opacity: 1;
+    color: #061551;
+}
+
+.EditableDropDownOverlayColor .orange {
+    background-color: #f9b812;
+    opacity: 1;
+    color: #fff;
+}
+
+.EditableDropDownOverlayColor .orange-notext {
+    background-color: #f9b812;
+    opacity: 1;
+    color: #f9b812;
+}
+
+.EditableDropDownOverlayColor .pantone {
+    background-color: #a51890;
+    opacity: 1;
+    color: #fff;
+}
+
+.EditableDropDownOverlayColor .pantone-notext {
+    background-color: #a51890;
+    opacity: 1;
+    color: #a51890;
+}
+
+.EditableDropDownOverlayColor .celebrity {
+    background-color: #0073bb;
+    opacity: 1;
+    color: #fff;
+}
+
+.EditableDropDownOverlayColor .green {
+    opacity: 1;
+    background-color: #00a18e;
+    color: #fff;
+}
+
+.EditableDropDownOverlayColor .royal-blue-1 {
+    opacity: 1;
+    background-color: #5461C8;
+}
+
+.EditableDropDownOverlayColor .royal-blue-2 {
+    opacity: 1;
+    background-color: #71C5E8;
+}
+
+.EditableDropDownOverlayColor .royal-blue-3 {
+    opacity: 1;
+    background-color: #131E29;
+}
+
+.EditableDropDownOverlayColor .royal-blue-4 {
+    opacity: 1;
+    background-color: #ABCAE9;
+}
+
+.EditableDropDownOverlayColor .celebrity-solarium-blue {
+    opacity: 1;
+    background-color: #299BE1;
+}
+
+.EditableDropDownOverlayColor .celebrity-process-cyan {
+    opacity: 1;
+    background-color: #12B5EA;
+}
+
+.EditableDropDownOverlayColor.celebrity-blue {
+    opacity: 1;
+    background-color: #002859;
+}
+
+.EditableDropDownOverlayColor .celebrity-gray-7 {
+    opacity: 1;
+    background-color: #B9B9B9;
+}
+
+.EditableDropDownOverlayColor .celebrity-gray-8 {
+    opacity: 1;
+    background-color: #666;
+}
+
+.EditableDropDownOverlayColor .celebrity-gray-10 {
+    opacity: 1;
+    background-color: #333;
+}
+
+input[type=text] {
+    height: 30px !important;
+}
+
+.uploader label {
+    margin: 0 10px;
+}
+
+.uploadableContainer.uploader.well {
+    display: block;
+}
+
+input[type="text"].fileSelector {
+    height: 30px;
+}
+
+.crowded .uploadableContainer .fileSelector {
+    width: 184px;
+    height: 30px;
+}
+
+span.editorLabel {
+    display: block;
+}
+
+
+.itemEditor label {
+    display: block;
+    font-weight: normal;
+}
+
+.tab-content {
+    padding-top: 30px;
 }
