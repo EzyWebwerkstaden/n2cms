@@ -90,6 +90,12 @@
 
     $(document).ready(function () {
         // future publish
+
+        if ($("#aspnetForm").length > 0) {
+            if ($("#aspnetForm").attr("action").lastIndexOf("#") > -1)
+                $("#aspnetForm").attr("action", $("#aspnetForm").attr("action").substring(0, $("#aspnetForm").attr("action").lastIndexOf("#")));
+        }
+
         $("#futurePanel").hide().click(function (e) {
             e.stopPropagation();
         });
