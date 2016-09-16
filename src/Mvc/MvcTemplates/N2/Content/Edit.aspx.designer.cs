@@ -22,15 +22,6 @@ namespace N2.Edit {
         protected global::System.Web.UI.WebControls.LinkButton btnSavePublish;
         
         /// <summary>
-        /// btnPreviewMain control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnPreviewMain;
-        
-        /// <summary>
         /// btnPreview control.
         /// </summary>
         /// <remarks>
