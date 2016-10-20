@@ -277,6 +277,12 @@ namespace N2.Edit
 		public virtual string GetPreviewUrl(ContentItem item)
 		{
 			string url = ManagementPaths.GetPreviewUrl(item);
+
+		    if (!string.IsNullOrEmpty(url) && HttpContext.Current != null && HttpContext.Current.Request.IsSecureConnection)
+		    {
+		        url = url.Replace("http", "https");
+		    }
+
 			return String.IsNullOrEmpty(url) ? ManagementPaths.ResolveResourceUrl("{ManagementUrl}/Empty.aspx") : url;
 		}
 
